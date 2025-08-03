@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { router } from "expo-router";
 
 const CONFERENCES = [
   {
@@ -23,18 +24,12 @@ const CONFERENCES = [
 ];
 
 export default function ConferencesScreen() {
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    companions: 0,
-  });
-
-  const handleSubscribe = () => {
-    // TODO: Implement subscription logic
-    console.log("Subscribing with data:", formData);
-    setShowForm(false);
+  const handleSubscribe = (conferenceId: string) => {
+    // Navigate to the conference subscription page with the conference ID
+    router.push({
+      pathname: '/conference-subscribe',
+      params: { conferenceId }
+    });
   };
 
   return (
@@ -59,51 +54,14 @@ export default function ConferencesScreen() {
             {conference.isUpcoming && (
               <TouchableOpacity
                 style={styles.subscribeButton}
-                onPress={() => setShowForm(true)}
+                onPress={() => handleSubscribe(conference.id)}
               >
-                <Text style={styles.subscribeButtonText}>Subscribe</Text>
+                <Text style={styles.subscribeButtonText}>Register Now</Text>
               </TouchableOpacity>
             )}
           </View>
         ))}
-        {showForm && (
-          <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>Conference Subscription</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              value={formData.name}
-              onChangeText={(text) => setFormData({ ...formData, name: text })}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChangeText={(text) => setFormData({ ...formData, phone: text })}
-            />
-            <View style={styles.companionsContainer}>
-              <Text style={styles.label}>Number of Companions:</Text>
-              <TextInput
-                style={styles.companionsInput}
-                keyboardType="numeric"
-                value={formData.companions.toString()}
-                onChangeText={(text) => setFormData({ ...formData, companions: parseInt(text) || 0 })}
-              />
-            </View>
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubscribe}
-            >
-              <Text style={styles.submitButtonText}>Submit</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+
       </ScrollView>
     </SafeAreaView>
   );

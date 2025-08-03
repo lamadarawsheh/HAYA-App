@@ -1,22 +1,60 @@
-import { BLOG_DATA } from '@/types/blog';
+import { type BlogPost } from '@/types/blog';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo } from 'react';
-import { Image, SafeAreaView, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, SafeAreaView, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { fetchBlogById } from '@/services/api';
 
 export default function BlogDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const [blog, setBlog] = useState<BlogPost | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const blog = useMemo(() => {
-    return BLOG_DATA.find(blog => blog.id === id);
+  useEffect(() => {
+    const loadBlog = async () => {
+      if (!id) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await fetchBlogById(id);
+        setBlog(data);
+      } catch (err) {
+        console.error('Failed to load blog post:', err);
+        setError('Failed to load blog post. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBlog();
   }, [id]);
 
-  if (!blog) {
+  if (isLoading) {
     return (
-      <View style={styles.container}>
-        <Text>Blog post not found</Text>
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading article...</Text>
+      </View>
+    );
+  }
+
+  if (error || !blog) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Ionicons name="alert-circle-outline" size={48} color="#FF3B30" />
+        <Text style={styles.errorText}>
+          {error || 'Blog post not found'}
+        </Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => router.push('/blogs')}
+        >
+          <Text style={styles.retryButtonText}>Back to Articles</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -125,6 +163,40 @@ const styles = StyleSheet.create({
   coverImage: {
     width: '100%',
     height: 250,
+    backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   contentContainer: {
     padding: 20,
